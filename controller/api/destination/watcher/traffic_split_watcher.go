@@ -98,6 +98,13 @@ func (tsw *TrafficSplitWatcher) addTrafficSplit(obj interface{}) {
 		Namespace: split.Namespace,
 	}
 
+	// Skip for TrafficSplit resoources with specific label to test
+	//  the SMI adaptor until we remove this TS logic in destination
+	_, ok := split.Annotations["ts.linkerd.io/ignore-at-destination"]
+	if ok {
+		return
+	}
+
 	publisher := tsw.getOrNewTrafficSplitPublisher(id, split)
 
 	publisher.update(split)
