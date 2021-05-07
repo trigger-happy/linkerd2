@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/grantae/certinfo"
 	pkgcmd "github.com/linkerd/linkerd2/pkg/cmd"
 	"github.com/linkerd/linkerd2/pkg/k8s"
 	"github.com/spf13/cobra"
@@ -80,8 +80,7 @@ This command initiates a port-forward to a given pod or a set of pods and fetche
 				fmt.Print("Could not fetch Certificate. Ensure that the pod(s) are meshed by running `linkerd inject`\n")
 				return nil
 			}
-			for i, resultCert := range resultCerts {
-				fmt.Printf("\nPOD %s (%d of %d)\n\n", resultCert.pod, i+1, len(resultCerts))
+			for _, resultCert := range resultCerts {
 				if resultCert.err != nil {
 					fmt.Printf("\n%s\n", resultCert.err)
 					return nil
@@ -90,12 +89,11 @@ This command initiates a port-forward to a given pod or a set of pods and fetche
 					if cert.IsCA {
 						continue
 					}
-					result, err := certinfo.CertificateText(cert)
-					if err != nil {
-						fmt.Printf("\n%s\n", err)
-						return nil
+					pemBlock := pem.Block{
+						Type:  "CERTIFICATE",
+						Bytes: cert.Raw,
 					}
-					fmt.Print(result)
+					pem.Encode(os.Stdout, &pemBlock)
 				}
 			}
 			return nil
